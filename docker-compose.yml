@@ -1,22 +1,4 @@
 services:
-  database:
-    image: postgres:15
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - directus
-    environment:
-      EXTENSIONS_AUTO_RELOAD: "true"
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   directus:
     image: directus/directus:11.6.1
     ports:
@@ -24,19 +6,10 @@ services:
     volumes:
       - ./uploads:/directus/uploads
       - ./extensions:/directus/extensions
-    networks:
-      - directus
-    depends_on:
-      database:
-        condition: service_healthy
     environment:
       # Database Configuration
-      DB_CLIENT: "pg"
-      DB_HOST: "database"
-      DB_PORT: "5432"
-      DB_DATABASE: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      DATABASE_URL: ${DATABASE_URL}
+      DB_SSL: "true"
 
       # Directus Configuration
       KEY: ${DIRECTUS_KEY}
@@ -52,12 +25,5 @@ services:
       RATE_LIMITER_ENABLED: "true"
       CORS_ENABLED: "true"
       CORS_ORIGIN: ${CORS_ORIGIN}
-      
+
     restart: unless-stopped
-
-networks:
-  directus:
-    name: vault-backend
-
-volumes:
-  postgres_data:

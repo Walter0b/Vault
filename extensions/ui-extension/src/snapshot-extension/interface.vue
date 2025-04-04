@@ -1,105 +1,144 @@
 <template>
-	<div class="travelers-interface">
-		<!-- Left sidebar: table of travelers -->
-		<div class="sidebar">
-			<table>
-				<thead>
-					<tr>
-						<th>Traveler</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr v-for="traveler in travelers" :key="traveler.id" @click="selectTraveler(traveler)"
-						:class="{ active: traveler.id === selectedTraveler?.id }">
-						<td>{{ traveler.name }}</td>
-					</tr>
-				</tbody>
-			</table>
-		</div>
-
-		<!-- Right panel: preview details only appear when an item is clicked -->
-		<div class="preview" v-if="selectedTraveler">
-			<h2>{{ selectedTraveler.name }}</h2>
-			<p><strong>Income:</strong> {{ selectedTraveler.income }}</p>
-			<p><strong>Address:</strong> {{ selectedTraveler.address }}</p>
-			<!-- You can include additional details here -->
-		</div>
+	<div class="file-preview">
+		<video v-if="['video'].includes(previewFileType.type)" controls :src="src" alt="" role="presentation" />
+		<iframe v-if="['doc', 'ppt'].includes(previewFileType.type)"
+			:src="`https://view.officeapps.live.com/op/view.aspx?src=${src}`" frameborder="0"></iframe>
+		<iframe v-if="['pdf'].includes(previewFileType.type)" :src="src" frameborder="0"></iframe>
 	</div>
 </template>
 
 <script>
-export default {
-	name: 'TravelersSplitView',
+import { defineComponent, ref, watch, computed, inject } from 'vue';
+import { useApi } from '@directus/extensions-sdk'
+
+function getRootPath() {
+	const path = window.location.pathname
+	const parts = path.split('/')
+	const adminIndex = parts.indexOf('admin')
+	const rootPath = parts.slice(0, adminIndex).join('/') + '/'
+	return rootPath;
+}
+function addQueryToPath(path, query) {
+	const queryParams = new URLSearchParams(path.split('?')[1] || '');
+	for (const [key, value] of Object.entries(query)) {
+		queryParams.set(key, value);
+	}
+	return path.split('?')[0] + '?' + queryParams;
+}
+
+function addTokenToURL(url, token) {
+	if (!token) return url;
+	return addQueryToPath(url, { access_token: token });
+}
+
+export default defineComponent({
 	props: {
-		// Standard Directus interface props
 		value: {
-			type: [String, Number, Object, Array, Boolean],
+			type: [String, Object],
 			default: null,
 		},
-		interface: {
-			type: Object,
-			default: () => ({}),
+		fileField: {
+			type: String,
+			default: ''
 		},
-		field: {
-			type: Object,
-			default: () => ({}),
-		},
-	},
-	data() {
-		return {
-			travelers: [],
-			selectedTraveler: null,
-		};
-	},
-	async created() {
-		try {
-			// Replace '/items/travelers' with your actual API endpoint or collection name
-			const response = await this.$axios.get('/items/travelers');
-			this.travelers = response.data.data || [];
-		} catch (error) {
-			console.error('Error fetching travelers:', error);
+		assetsToken: {
+			type: String,
+			default: ''
 		}
 	},
-	methods: {
-		selectTraveler(traveler) {
-			this.selectedTraveler = traveler;
-			// If you want to save the selected value to the Directus field:
-			this.$emit('input', traveler.id);
-		},
-	},
-};
+	emits: ['input'],
+	setup(props, { emit }) {
+		const api = useApi()
+		const file = ref(null);
+		const values = inject('values')
+
+		const loading = ref(false);
+
+		const src = computed(() => {
+			if (!file.value) return null;
+			if (previewFileType.value.type) {
+				return addTokenToURL((previewFileType.value.type === 'video' ? '' : window.location.origin) + getRootPath() + `assets/${file.value.id}.${previewFileType.value.stuff}`, props.assetsToken);
+			}
+			return null;
+		});
+
+		const previewFileType = computed(() => {
+			let type = ''
+			let stuff = ''
+			if (!file.value) return {
+				type,
+				stuff
+			}
+			let fileName = file.value.filename_download
+			let len = fileName.length
+			if (fileName.indexOf('.mp4') === len - 4) {
+				type = 'video'
+			}
+			if (fileName.indexOf('.doc') === len - 4 || fileName.indexOf('.docx') === len - 5) {
+				type = 'doc'
+			}
+			if (fileName.indexOf('.ppt') === len - 4 || fileName.indexOf('.pptx') === len - 5) {
+				type = 'ppt'
+			}
+			if (fileName.indexOf('.pdf') === len - 4) {
+				type = 'pdf'
+			}
+			let arr = fileName.split('.')
+			stuff = arr[arr.length - 1] || ''
+			return {
+				type,
+				stuff
+			}
+		})
+
+		watch(
+			() => values.value,
+			(newValue) => {
+				if (newValue) {
+					fetchImage();
+				}
+			},
+			{ immediate: true }
+		);
+
+		return {
+			file,
+			loading,
+			previewFileType,
+			src
+		};
+
+		async function fetchImage() {
+			loading.value = true;
+			try {
+				let id = (props.fileField && values.value[props.fileField]) ? values.value[props.fileField] : ''
+				if (!id) return
+				const response = await api.get(`/files/${id}`, {
+					params: {
+						fields: ['id', 'title', 'width', 'height', 'filesize', 'type', 'filename_download'],
+					},
+				});
+				file.value = response.data.data
+			} catch (err) {
+				console.log(err)
+			} finally {
+				loading.value = false;
+			}
+		}
+	}
+});
 </script>
 
 <style scoped>
-.travelers-interface {
-	display: flex;
-	gap: 1rem;
-	align-items: flex-start;
-}
-
-.sidebar {
-	width: 30%;
-	border-right: 1px solid #ddd;
-	padding-right: 1rem;
-}
-
-.preview {
-	flex: 1;
-	padding-left: 1rem;
-	min-height: 200px;
-	overflow: auto;
-}
-
-table {
+.file-preview video {
+	display: block;
+	margin: 0 auto;
+	z-index: 1;
 	width: 100%;
-	border-collapse: collapse;
 }
 
-tbody tr {
-	cursor: pointer;
+.file-preview iframe {
+	width: 100%;
+	min-height: 500px;
 }
-
-tbody tr.active {
-	background-color: #e8f0fe;
-}
-</style>  
+</style>
