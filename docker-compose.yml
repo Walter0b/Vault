@@ -57,7 +57,7 @@ services:
 
 networks:
   directus:
-    name: directus
+    name: vault-backend
 
 volumes:
   postgres_data:
