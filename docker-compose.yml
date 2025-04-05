@@ -16,7 +16,7 @@ services:
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_SSL: '{"rejectUnauthorized": false}'
-
+      
 
       # Directus Configuration
       KEY: ${DIRECTUS_KEY}
@@ -24,7 +24,7 @@ services:
       ADMIN_EMAIL: ${ADMIN_EMAIL}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
 
-      NODE_OPTIONS: "--dns-result-order=ipv4first"
+      NODE_OPTIONS: "--dns-result-order=ipv4first --max-old-space-size=4096"
       # Recommended for production
       PUBLIC_URL: ${PUBLIC_URL}
 
