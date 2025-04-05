@@ -2,7 +2,7 @@ services:
   directus:
     image: directus/directus:11.6.1
     ports:
-      - "${DIRECTUS_PORT}:8055"
+      - "${PORT}:8055"
     volumes:
       - ./uploads:/directus/uploads
       - ./extensions:/directus/extensions
