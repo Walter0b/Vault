@@ -15,7 +15,8 @@ services:
       DB_DATABASE: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
-      DB_SSL: "true"
+      DB_SSL: '{"rejectUnauthorized": false}'
+
 
       # Directus Configuration
       KEY: ${DIRECTUS_KEY}
