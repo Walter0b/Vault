@@ -8,7 +8,13 @@ services:
       - ./extensions:/directus/extensions
     environment:
       # Database Configuration
-      DATABASE_URL: ${DATABASE_URL}
+      #DATABASE_URL: ${DATABASE_URL}
+      DB_CLIENT:  ${DB_CLIENT}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_DATABASE: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
       DB_SSL: "true"
 
       # Directus Configuration
@@ -17,6 +23,7 @@ services:
       ADMIN_EMAIL: ${ADMIN_EMAIL}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
 
+      NODE_OPTIONS: "--dns-result-order=ipv4first"
       # Recommended for production
       PUBLIC_URL: ${PUBLIC_URL}
 
