@@ -9,6 +9,7 @@ services:
     environment:
       # Database Configuration
       #DATABASE_URL: ${DATABASE_URL}
+      NODE_OPTIONS: "--max_old_space_size=7096"
       DB_CLIENT:  ${DB_CLIENT}
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT}
