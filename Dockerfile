@@ -8,4 +8,3 @@ COPY migrations /directus/migrations
 
 # Exposer le port par défaut de Directus
 EXPOSE 8055
-
