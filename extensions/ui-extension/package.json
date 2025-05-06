@@ -23,6 +23,11 @@
 				"type": "interface",
 				"name": "snapshot-extension",
 				"source": "src/snapshot-extension/index.ts"
+			},
+			{
+				"type": "layout",
+				"name": "snapshots",
+				"source": "src/snapshots/index.ts"
 			}
 		],
 		"host": "^10.10.0"
